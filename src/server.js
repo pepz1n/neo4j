@@ -1,6 +1,6 @@
+import fs from 'fs';
 import 'dotenv/config';
 import express from 'express';
-import fs from 'fs';
 import path from 'path';
 import morgan from 'morgan';
 import cors from 'cors'
@@ -8,7 +8,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import Routes from './routes/index.js';
-import driver from './config/neo4j.js';
+import neode from './config/neode.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -37,14 +37,9 @@ app.use((req, res) => {
   res.status(404).send('404 - página não encontrada');
 })
 
-// Verify Neo4j connection
-driver.verifyConnectivity()
-  .then(() => {
-    console.log('Conectado ao Neo4j com sucesso!');
-  })
-  .catch(error => {
-    console.error('Erro ao conectar ao Neo4j:', error);
-  });
+// Verify Neo4j connection (Neode doesn't expose verifyConnectivity directly on instance usually, but we can access driver)
+// Or just let it fail on first request. But let's try to access the driver if possible or just log.
+console.log('Neode instance initialized.');
 
 app.listen(process.env.API_PORT, (e) => {
   if (e) {

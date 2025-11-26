@@ -1,93 +1,68 @@
-import driver from '../config/neo4j.js';
+import neode from '../config/neode.js';
 
 const UsuarioController = {
   async criar(req, res) {
     const { nome, email } = req.body;
-    const session = driver.session();
     try {
-      const result = await session.run(
-        'CREATE (u:Usuario {id: randomUUID(), nome: $nome, email: $email}) RETURN u',
-        { nome, email }
-      );
-      const singleRecord = result.records[0];
-      const node = singleRecord.get(0);
-      res.status(201).json(node.properties);
+      const usuario = await neode.create('Usuario', {
+        nome,
+        email,
+      });
+      const json = await usuario.toJson();
+      console.log('Usuario criado:', json);
+      res.status(201).json(json);
     } catch (error) {
       res.status(500).json({ erro: error.message });
-    } finally {
-      await session.close();
     }
   },
 
   async listarTodos(req, res) {
-    const session = driver.session();
     try {
-      const result = await session.run('MATCH (u:Usuario) RETURN u');
-      const usuarios = result.records.map(record => record.get('u').properties);
-      res.json(usuarios);
+      const usuarios = await neode.all('Usuario');
+      res.json(await usuarios.toJson());
     } catch (error) {
       res.status(500).json({ erro: error.message });
-    } finally {
-      await session.close();
     }
   },
 
   async buscarPorId(req, res) {
     const { id } = req.params;
-    const session = driver.session();
     try {
-      const result = await session.run(
-        'MATCH (u:Usuario {id: $id}) RETURN u',
-        { id }
-      );
-      if (result.records.length === 0) {
+      const usuario = await neode.find('Usuario', id);
+      if (!usuario) {
         return res.status(404).json({ erro: 'Usuário não encontrado' });
       }
-      const singleRecord = result.records[0];
-      const node = singleRecord.get(0);
-      res.json(node.properties);
+      res.json(await usuario.toJson());
     } catch (error) {
       res.status(500).json({ erro: error.message });
-    } finally {
-      await session.close();
     }
   },
 
   async atualizar(req, res) {
     const { id } = req.params;
     const { nome, email } = req.body;
-    const session = driver.session();
     try {
-      const result = await session.run(
-        'MATCH (u:Usuario {id: $id}) SET u.nome = $nome, u.email = $email RETURN u',
-        { id, nome, email }
-      );
-      if (result.records.length === 0) {
+      const usuario = await neode.find('Usuario', id);
+      if (!usuario) {
         return res.status(404).json({ erro: 'Usuário não encontrado' });
       }
-      const singleRecord = result.records[0];
-      const node = singleRecord.get(0);
-      res.json(node.properties);
+      await usuario.update({ nome, email });
+      res.json(usuario.toJson());
     } catch (error) {
       res.status(500).json({ erro: error.message });
-    } finally {
-      await session.close();
     }
   },
 
   async deletar(req, res) {
     const { id } = req.params;
-    const session = driver.session();
     try {
-      const result = await session.run(
-        'MATCH (u:Usuario {id: $id}) DELETE u',
-        { id }
-      );
+      const usuario = await neode.find('Usuario', id);
+      if (usuario) {
+        await usuario.delete();
+      }
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ erro: error.message });
-    } finally {
-      await session.close();
     }
   }
 };
