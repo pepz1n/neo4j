@@ -37,9 +37,6 @@ app.use((req, res) => {
   res.status(404).send('404 - página não encontrada');
 })
 
-// Verify Neo4j connection (Neode doesn't expose verifyConnectivity directly on instance usually, but we can access driver)
-// Or just let it fail on first request. But let's try to access the driver if possible or just log.
-console.log('Neode instance initialized.');
 
 app.listen(process.env.API_PORT, (e) => {
   if (e) {
